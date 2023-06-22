@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// 使用 Prisma 定義了一個名為 "User" 的模型
+model User {
+  // 有一個欄位 "id"，它的型別是 String。
+  // 這個欄位被標記為 @id，這表示它是這個模型的唯一識別符。
+  // @default(auto()) 表示這個欄位的默認值是自動生成的。 // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#auto
+  // @map("_id") 表示在資料庫中這個欄位的名稱為 "_id"。
+  // @db.ObjectId 表示這個欄位的資料庫類型是 ObjectId，這通常用於與 MongoDB 整合。
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name String?
+
+  // 欄位 "email" 的型別是 String
+  // "email" 欄位後面的問號 (?) 表示該欄位可以為空值，即可以是 null 或 undefined。
+  // @unique 是一個 Prisma 的指示符，它標記了 "email" 欄位需要是唯一的。這表示在資料庫中，每個 "User" 實例的 email 值都必須是獨一無二的，不能重複。
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  hashedPassword String?
+
+  // 欄位 "createdAt" 的型別是 DateTime，表示它可以存儲日期和時間數據。
+  // 在這個定義中，"createdAt" 欄位後面的 @default(now()) 表示它的默認值是當前的日期和時間。這意味著在創建新的 "User" 實例時，如果沒有為 "createdAt" 欄位提供具體的值，則默認值將設置為當前的日期和時間。
+  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#now
+  createdAt DateTime @default(now())
+
+  // 欄位 "updatedAt" 的型別是 DateTime，表示它可以存儲日期和時間數據。
+  // "updatedAt" 欄位前面的 @updatedAt 是 Prisma 的指示符。它用於指定該欄位的值應該在每次更新 "User" 實例時自動更新為當前的日期和時間。
+  updatedAt DateTime @updatedAt
+
+  // 欄位 "favoriteIds" 的型別是 String[]，表示它是一個字串陣列，用於存儲多個字串值。
+  // "favoriteIds" 欄位後面的 @db.ObjectId 表示該欄位的資料庫類型是 ObjectId。這通常用於與 MongoDB 整合，表示這個欄位的值是 MongoDB 資料庫中的 ObjectId 類型。
+  favoriteIds String[] @db.ObjectId
+
+  accounts     Account[]
+  listings     Listing[]
+  reservations Reservation[]
+}
+
+// https://authjs.dev/reference/adapter/prisma#mongodb-support
+// model Account 必須和 next auth 上面寫得一模一樣，我 id_token String? 寫成 id_token String? 整個登入就會壞掉
+// 出錯的狀況紀錄：用 github 的 social login 登入的時候 getServerSession 返回 null ，表示沒有登入成功，但是 mongodb 上面會有這個 User 但是沒有這個 User 的 github Account。
+// 正確的情況應該要是 getServerSession 返回的是登入後的 Session object ， mongodb 的 Account Collection 要有使用者的資料， User Collection 也要有使用者的資料，缺一不可
+model Account {
+  id                String @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+
+  // "Account" 模型有一個 "refresh_token" 欄位。
+  // 欄位的型別是 String
+  // 並且使用 @db.String 指示符，表示在 MongoDB 資料庫中，該欄位的資料庫類型應該是字串類型。
+  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#mongodb
+  refresh_token String? @db.String
+  access_token  String? @db.String
+  expires_at    Int?
+  token_type    String?
+  scope         String?
+
+  // id_token 是一個可選的字符串欄位，用於存儲身份驗證的 ID token。? 符號表示這個欄位可以為空，也就是允許為 null 或缺少值。
+  // @db.String 是一個 Prisma 的指示符，用於指定底層數據庫中的欄位類型。在這裡，@db.String 指示符表示該欄位在底層數據庫中的類型為字符串。
+  id_token      String? @db.String
+  session_state String?
+
+  // "Account" 模型有一個欄位 "user"。
+  // 欄位 "user" 是與 "User" 模型之間的關聯，表示 "Account" 模型與 "User" 模型之間存在一對一的關係。
+  // 關聯被指定為 @relation，並通過 fields 和 references 參數來指定關聯的鍵。
+  // fields: [userId] 表示 "Account" 模型中的 "user" 欄位是通過 "userId" 來建立關聯的
+  // references: [id] 則表示該關聯是基於 "User" 模型的 "id" 欄位。
+  // onDelete: Cascade 表示當 "User" 模型中的相關 "id" 欄位被刪除時，與之相關聯的 "Account" 模型的記錄也會被級聯刪除。這意味著當刪除一個使用者時，相應的帳戶記錄也會被自動刪除。
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // @@unique 指示符定義了一個唯一性約束。
+  // @@unique([provider,providerAccountId]) 指示符應用在 User 模型上，並指定了一個由 [provider, providerAccountId] 組成的陣列。這意味著在 User 模型中，每個記錄的 provider 和 providerAccountId 的組合必須是唯一的，不允許重複。
+  @@unique([provider, providerAccountId])
+}
+
+model Listing {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  description   String
+  imageSrc      String
+  createdAt     DateTime @default(now())
+  category      String
+  roomCount     Int
+  bathroomCount Int
+  guestCount    Int
+  locationValue String
+  userId        String   @db.ObjectId
+  price         Int
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
+}
+
+model Reservation {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  listingId  String   @db.ObjectId
+  startDate  DateTime
+  endDate    DateTime
+  totalPrice Int
+  createdAt  DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
