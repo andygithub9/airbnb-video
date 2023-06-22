@@ -157,3 +157,7 @@ PrismaClientInitializationError: Prisma has detected that this project was built
   }
 }
 ```
+
+## error=oauthaccountnotlinked
+如果在部署到 vercel 上後，使用 github social login 發現 url 帶有 error=oauthaccountnotlinked 錯誤，可以試著先把你原本在 localhost 測試用的先刪掉再試一次看看  
+參考：https://github.com/nextauthjs/next-auth/discussions/1601#discussioncomment-804606
