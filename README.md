@@ -130,6 +130,8 @@ https://tailwindcss.com/docs/transform-origin
 
 # 錯誤紀錄
 
+## 靜態頁面生成錯誤
+
 ```sh
 Generating static pages (0/11)Error: Error: Dynamic server usage: searchParams.userId
 at getListings (/Users/tvbs/Documents/GitHub/airbnb-video/.next/server/chunks/275.js:107:15)
@@ -138,3 +140,20 @@ at getListings (/Users/tvbs/Documents/GitHub/airbnb-video/.next/server/chunks/27
 解決方法：https://github.com/vercel/next.js/issues/49182#issuecomment-1535292150
 可能原因：  
 根據 https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config#dynamic 文檔，可能是我們在靜態生成頁面（Generating static pages）的時候 searchParams.userId 並不存在，所以通過在 app/page.tsx 設置 `export const dynamic = 'force-dynamic'` 將所有的 fetch 改為動態的
+
+## Vercel 部署錯誤
+
+```sh
+PrismaClientInitializationError: Prisma has detected that this project was built on Vercel, which caches dependencies. This leads to an outdated Prisma Client because Prisma's auto-generation isn't triggered. To fix this, make sure to run the `prisma generate` command during the build process.
+```
+
+根據文檔：https://www.prisma.io/docs/guides/other/troubleshooting-orm/help-articles/vercel-caching-issue#a-custom-postinstall-script  
+我們 package.json file 下新增一行指令
+
+```json
+{
+  "scripts" {
+    "postinstall": "prisma generate"
+  }
+}
+```
