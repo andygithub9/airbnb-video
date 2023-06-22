@@ -78,7 +78,9 @@ https://tailwindcss.com/docs/transform-origin
 6. 創建 app/action/getCurrentUser.ts 文件，在此文件從 "next-auth/next" 引入 getServerSession 拿到當前用戶的 session ，再拿這個 session 通過 prisma 去 db 撈資料，就可以取得當前用戶的資料了
 
 ## implement social login
+
 ### Github
+
 1. 登入你的 Github
 2. 點自己頭像 -> 點 setting
 3. 到左側欄最下面 Developer settings
@@ -90,6 +92,7 @@ https://tailwindcss.com/docs/transform-origin
 9. 在有用到 Github 登入的地方從 "next-auth/react" 引入 signIn function ，傳入參數並調用 signIn("github") ，就完成 Github 的 social login 了
 
 ### Google
+
 1. 到 google cloud console https://console.cloud.google.com/
 2. 點擊左上角 Select a project
 3. 點擊右上方 NEW PROJECT
@@ -105,20 +108,33 @@ https://tailwindcss.com/docs/transform-origin
 13. 在有用到 Google 登入的地方從 "next-auth/react" 引入 signIn function ，傳入參數並調用 signIn("google") ，就完成 Google 的 social login 了
 
 # 地圖套件
+
 1. npm i leaflet
 2. npm i -D @types/leaflet
 3. npm i react-leaflet
 4. 代碼請參考 app/components/MAP.tsx 和 app/components/modals/RentModal.tsx
 
 # upload image using Cloudinary
+
 1. 到 https://cloudinary.com/
 2. 點擊 SIGN UP FOR FREE
 3. 登入之後點擊左側欄 Dashboard
 4. 安裝 Next Cloudinary https://next-cloudinary.spacejelly.dev/installation  
    `npm install next-cloudinary`
 5. Add the following variable to your .env file.
-`NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="<Your Cloud Name>"` ，  
-Dashboard 上面有你的 Cloud Name ，不要忘記變數值前後要加雙引號
+   `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="<Your Cloud Name>"` ，  
+   Dashboard 上面有你的 Cloud Name ，不要忘記變數值前後要加雙引號
 6. 代碼請見： app/components/inputs/ImageUpload.tsx
 7. 在 Cloudinary 點擊左下角的齒輪進到 Settings -> 點擊左側欄 Upload -> 找到 Upload presets 這一項 -> 點擊 Add upload preset -> Signing Mode 選擇 Unsigned -> 點擊 Save -> 複製剛剛創建的 Upload preset 的 Name 貼到 CldUploadWidget 組件的 uploadPreset 屬性
 8. 點擊 CldUploadWidget 選擇片後就會直接上傳到 Cloudinary ，點擊在 Cloudinary 左側的 Media Library 可以看到剛才上傳的圖片
+
+# 錯誤紀錄
+
+```sh
+Generating static pages (0/11)Error: Error: Dynamic server usage: searchParams.userId
+at getListings (/Users/tvbs/Documents/GitHub/airbnb-video/.next/server/chunks/275.js:107:15)
+```
+
+解決方法：https://github.com/vercel/next.js/issues/49182#issuecomment-1535292150
+可能原因：  
+根據 https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config#dynamic 文檔，可能是我們在靜態生成頁面（Generating static pages）的時候 searchParams.userId 並不存在，所以通過在 app/page.tsx 設置 `export const dynamic = 'force-dynamic'` 將所有的 fetch 改為動態的
