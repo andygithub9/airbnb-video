@@ -152,7 +152,7 @@ PrismaClientInitializationError: Prisma has detected that this project was built
 
 ```json
 {
-  "scripts" {
+  "scripts": {
     "postinstall": "prisma generate"
   }
 }
